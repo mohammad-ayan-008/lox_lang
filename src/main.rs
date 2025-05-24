@@ -5,10 +5,12 @@ use std::{
     process::exit,
 };
 
+use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
 use token::Token;
 
+mod interpreter;
 mod scanner;
 mod token;
 mod tokentype;
@@ -17,22 +19,24 @@ mod parser;
 fn main() {
     let args: Vec<String> = env::args().collect();
     println!("{:?}",args);
-
+    let interpreter = Interpreter::new();
     if args.len() > 2 {
         println!("Using : jlox [script]");
         exit(64);
     } else if args.len() == 2 {
-        run_file(args[1].clone());
+  //      run_file(args[1].clone());
     } else {
         run_prompt();
     }
 }
-
+/*
 fn run_file(path: String) {
     let data = read_to_string(path);
     run(data.unwrap());
-}
+}*/
 fn run_prompt()->Result<(),String>{
+    let mut interpreter = Interpreter::new();
+
     loop {
         print!(">> ");
         match stdout().flush() {
@@ -50,20 +54,21 @@ fn run_prompt()->Result<(),String>{
             }
             Err(_)=> return Err("coudn't read line".to_string()),
         }
-        print!("{}",buffer);
-        match run(buffer) {
+        print!("");
+        match run(&mut interpreter,buffer) {
             Ok(_)=>(),
             Err(m)=>println!("{}",m),
         }
     }
 }
 
-fn run(bytes: String) ->Result<(),String>{
+fn run(interpreter: &mut Interpreter, bytes: String) ->Result<(),String>{
     let scanner: Scanner = Scanner::new(bytes);
     let tokens: Vec<Token> = scanner.scanTokens();
     let mut parser = Parser::new(tokens);
     let expr = parser.parse()?;
-    println!("{}",expr.to_string());
+    let res = expr.eval()?;
+    println!("{}",res.to_string());
     //println!("{:#?}",tokens);
     Ok(())
 }

@@ -1,5 +1,7 @@
-use crate::token::{Literal, Token};
+use std::{fmt::format, result};
 
+use crate::{token::{Literal, Token}, tokentype::TokenType};
+#[derive(Debug,Clone,PartialEq)]
 pub enum LiteralValue {
     Number(f32),
     StringValue(String),
@@ -7,6 +9,37 @@ pub enum LiteralValue {
     False,
     Nil
 }
+
+impl LiteralValue{
+    pub fn is_falsy(&self)->LiteralValue{
+        match self {
+            Self::Number(x)=> if *x == 0.0 {  Self::True }else{Self::False},
+            Self::StringValue(s)=> if s.len() == 0 { Self::True}else{Self::False},
+            Self::True => Self::False,
+            Self::False=> Self::True,
+            Self::Nil => Self::True,
+        }
+    }
+    pub fn from_bool(b:bool)->Self{
+        if b {
+            Self::True
+        }else {
+            Self::False
+        }
+    }
+
+    pub fn to_type(&self)->String{
+        match self {
+            LiteralValue::Number(_)=>"Number".to_string(),
+            LiteralValue::StringValue(_)=>"String".to_string(),
+            LiteralValue::Nil=>"nil".to_string(),
+            LiteralValue::True=>"true".to_string(),
+            LiteralValue::False=>"false".to_string()
+        }
+    }
+}
+
+
 pub enum Expr{
     Binary{
         left:Box<Expr>,
@@ -23,8 +56,8 @@ pub enum Expr{
         operator:Token,
         right:Box<Expr>
     }
-
 }
+#[allow(warnings)]
 impl ToString for LiteralValue{
     fn to_string(&self) -> String {
         match self {
@@ -63,7 +96,7 @@ impl LiteralValue{
         }
     }
 }
-
+#[allow(warnings)]
 impl ToString for Expr {
     fn to_string(&self)->String{
         match self {
@@ -84,9 +117,76 @@ impl ToString for Expr {
         }
     }
 }
+
 impl Expr{
      pub fn print(&self){
         println!("=> {}",self.to_string());
+    }
+    pub fn eval(&self)->Result<LiteralValue,String>{
+        match self {
+            Expr::Literal { value } => Ok(value.clone()),
+            Expr::Grouping { expression }=> expression.eval(),
+            Expr::Unary { operator, right }=>{
+                let right = right.eval()?;
+                match (&right,operator.token_type) {
+                    (LiteralValue::Number(x),TokenType::MINUS)=>Ok(LiteralValue::Number(-x)),
+                 (_,TokenType::MINUS)=>Err(format!("Minus is not implemented for {}",right.to_type())),
+                    (any,TokenType::BANG)=> Ok(any.is_falsy()),
+                    (_,ttype)=>Err(format!("{:?} is not a valid unary operator",ttype)),
+                }
+            }
+
+            Expr::Binary { left, operator, right }=>{
+                let left = left.eval()?;
+                let right = right.eval()?;
+
+                match (&left,operator.token_type,&right) {
+                    (LiteralValue::Number(x),TokenType::PLUS,LiteralValue::Number(y))=>Ok(LiteralValue::Number(x+y)),
+                    (LiteralValue::Number(x),TokenType::MINUS,LiteralValue::Number(y))=>Ok(LiteralValue::Number(x-y)), 
+                    (LiteralValue::Number(x),TokenType::SLASH,LiteralValue::Number(y))=>Ok(LiteralValue::Number(x/y)),
+                    
+                    (LiteralValue::Number(x),TokenType::STAR,LiteralValue::Number(y))=>Ok(LiteralValue::Number(x*y)),
+
+
+                   (LiteralValue::Number(x),TokenType::GREATER,LiteralValue::Number(y))=>Ok(LiteralValue::from_bool(x>y)),
+
+                   (LiteralValue::Number(x),TokenType::GREATER_EQUAL,LiteralValue::Number(y))=>Ok(LiteralValue::from_bool(x>=y)),
+
+                   (LiteralValue::Number(x),TokenType::LESS,LiteralValue::Number(y))=>Ok(LiteralValue::from_bool(x<y)),
+
+                   (LiteralValue::Number(x),TokenType::LESS_EQUAL,LiteralValue::Number(y))=>Ok(LiteralValue::from_bool(x<=y)),
+
+                    (LiteralValue::StringValue(_),_,LiteralValue::Number(_))=>Err("Cannot operate on String and number".to_string()),
+                   (LiteralValue::Number(_),_,LiteralValue::StringValue(_))=>Err("Cannot operate on String and number".to_string()),
+                    (LiteralValue::StringValue(x),TokenType::PLUS,LiteralValue::StringValue(y))=>Ok(LiteralValue::StringValue(format!("{}{}",x,y))),
+
+
+(x,TokenType::BANG_EQUAL,y)=>Ok(LiteralValue::from_bool(x != y)),
+
+(x,TokenType::EQUAL_EQUAL,y)=>Ok(LiteralValue::from_bool(x == y)),
+(LiteralValue::StringValue(x),TokenType::GREATER,LiteralValue::StringValue(y))=>{
+                        Ok(LiteralValue::from_bool(x > y))
+                    }
+
+
+                   (LiteralValue::StringValue(x),TokenType::GREATER_EQUAL,LiteralValue::StringValue(y))=>Ok(LiteralValue::from_bool(x>=y)),
+
+                   (LiteralValue::StringValue(x),TokenType::LESS,LiteralValue::StringValue(y))=>Ok(LiteralValue::from_bool(x<y)),
+
+                   (LiteralValue::StringValue(x),TokenType::LESS_EQUAL,LiteralValue::StringValue(y))=>Ok(LiteralValue::from_bool(x<=y)),
+
+
+
+
+
+
+                    (x,ttype,y)=>Err(format!("{:?}  not impl for {:?} and {:?}",ttype,x,y)),
+
+                }
+            }
+
+            _=>todo!()
+        }
     }
    
 }
