@@ -51,103 +51,105 @@ impl Scanner {
             ';' => self.token_add(TokenType::SEMICOLON),
             '*' => self.token_add(TokenType::STAR),
             '!' => {
-                let token = match self.match_token('='){
-                    true=>TokenType::BANG_EQUAL,
-                    false=>TokenType::BANG
+                let token = match self.match_token('=') {
+                    true => TokenType::BANG_EQUAL,
+                    false => TokenType::BANG,
                 };
                 self.token_add(token);
-            },
+            }
             '=' => {
-                let token = match self.match_token('='){
-                    true=>TokenType::EQUAL_EQUAL,
-                    false=>TokenType::EQUAL
+                let token = match self.match_token('=') {
+                    true => TokenType::EQUAL_EQUAL,
+                    false => TokenType::EQUAL,
                 };
                 self.token_add(token);
-            },
+            }
             '>' => {
-                let token = match self.match_token('='){
-                    true=>TokenType::GREATER_EQUAL,
-                    false=>TokenType::GREATER
+                let token = match self.match_token('=') {
+                    true => TokenType::GREATER_EQUAL,
+                    false => TokenType::GREATER,
                 };
                 self.token_add(token);
-            },
+            }
             '<' => {
-                let token = match self.match_token('<'){
-                    true=>TokenType::LESS_EQUAL,
-                    false=>TokenType::LESS
+                let token = match self.match_token('<') {
+                    true => TokenType::LESS_EQUAL,
+                    false => TokenType::LESS,
                 };
                 self.token_add(token);
-            },
+            }
             '/' => {
-                match self.match_token('/'){
-                    true=>{
+                match self.match_token('/') {
+                    true => {
                         while self.peek() != '\n' && !self.is_at_end() {
                             self.advance();
                         }
                     }
-                    false=> self.token_add(TokenType::SLASH),
-                };   
-            },
-            ' ' | '\r' | '\t' => {},
-            '\n'=> self.line += 1,
-            '"'=> self.string(),
+                    false => self.token_add(TokenType::SLASH),
+                };
+            }
+            ' ' | '\r' | '\t' => {}
+            '\n' => self.line += 1,
+            '"' => self.string(),
             c if Self::is_digit(c) => self.number(),
             c if Self::is_alpha(c) => self.identifier(),
-            e=>{
-                panic!("Uknown Symbol {}",e);
+            e => {
+                panic!("Uknown Symbol {}", e);
             }
         }
     }
 
-
-    fn identifier(&mut self){
-        while Self::is_alpha_numeric(self.peek()){
-           self.advance(); 
+    fn identifier(&mut self) {
+        while Self::is_alpha_numeric(self.peek()) {
+            self.advance();
         }
         let key = &self.source[self.start..self.current];
 
         let mut t = self.keywords.get(key).cloned();
-        if  let None = t{
+        if let None = t {
             t = Some(TokenType::IDENTIFIER);
         }
         self.token_add(t.unwrap());
     }
 
-    fn number(&mut self){
-        while Self::is_digit(self.peek()){self.advance();}
+    fn number(&mut self) {
+        while Self::is_digit(self.peek()) {
+            self.advance();
+        }
 
-        if self.peek() == '.' && Self::is_digit(self.peek_next()){
+        if self.peek() == '.' && Self::is_digit(self.peek_next()) {
             self.advance();
             while Self::is_digit(self.peek()) {
                 self.advance();
             }
         }
-        
-        let value = self.source[self.start..self.current].parse::<f64>().unwrap();
+
+        let value = self.source[self.start..self.current]
+            .parse::<f64>()
+            .unwrap();
         self.add_token(TokenType::NUMBER, Some(Literal::FLiteral(value)));
     }
-    fn string(&mut self){
+    fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
-            if self.peek() =='\n' {
-                self.line +=1;
+            if self.peek() == '\n' {
+                self.line += 1;
             }
-                self.advance();
+            self.advance();
         }
         if self.is_at_end() {
-            println!("{} Unterminated String",self.line);
+            println!("{} Unterminated String", self.line);
             return;
         }
         self.advance();
-        let string = self.source[self.start + 1..self.current -1].to_owned();
+        let string = self.source[self.start + 1..self.current - 1].to_owned();
         self.add_token(TokenType::STRING, Some(Literal::StringLiteral(string)));
     }
 
-    fn peek(&self)->char{
+    fn peek(&self) -> char {
         if self.is_at_end() {
-            return  '\0';
+            return '\0';
         }
         self.source.as_bytes()[self.current] as char
-
     }
     fn advance(&mut self) -> char {
         let char = self.source.as_bytes()[self.current as usize];
@@ -170,11 +172,11 @@ impl Scanner {
         }
     }
 
-    fn match_token(&mut self,expected:char)->bool{
+    fn match_token(&mut self, expected: char) -> bool {
         if self.is_at_end() || self.source.as_bytes()[self.current] as char != expected {
-           return  false
+            return false;
         }
-        self.current +=1;
+        self.current += 1;
         true
     }
 
@@ -214,7 +216,7 @@ impl Scanner {
         c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
     }
 
-    fn is_alpha_numeric (c:char)->bool{
+    fn is_alpha_numeric(c: char) -> bool {
         Self::is_alpha(c) || Self::is_digit(c)
     }
 
