@@ -1,63 +1,7 @@
-var a ="lmaao";
-if ( 1 > 10){
-    var a = "lk";
+var a =6;
+//a= a+1;
+{
+    a = a + 1;
     print(a);
-}else{
-  if(1==1){
-    print("lost");
-  }
 }
 print(a);
-
-var ab= true or false;
-print(ab);
-
-if ( 5 < 6 and 5 < 10 and 5 > 11){
-    print("5 is kido");
-}else{
-    print("something wrong");
-}
-
-print("hi" or 2);
-
-print(true or false);       // true
-print(false or false);      // false
-print(true and false);      // false
-print(true and true);       // true
-print(false and true);      // false
-print("");
-
-if (true or false and false) {
-  print("A");  // A
-} else {
-  print("B");
-}
-
-if (false and true or true) {
-  print("C");  // C
-} else {
-  print("D");
-}
-
-if (false or false or false) {
-  print("E");
-} else {
-  print("F");  // F
-}
-print("");
-
-var a = "start";
-if (true or (a = "wrong")) {
-  print(a);  // start (right side not executed)
-}
-
-a = "start";
-if (false and (a = "wrong")) {
-  print(a);  // start (right side not executed)
-}
-print("   ");
-print(true or true and false);      // true   (and first, then or)
-print((true or true) and false);    // false
-print(false or false and true);     // false
-print(false or true and true);      // true
-

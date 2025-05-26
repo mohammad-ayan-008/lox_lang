@@ -1,4 +1,4 @@
-use std::{env, error::Error, rc::Rc};
+use std::{cell::RefCell, env, error::Error, rc::Rc};
 
 use crate::{
     environment::{self, Environment},
@@ -7,18 +7,18 @@ use crate::{
 };
 
 pub struct Interpreter {
-    environment: Rc<Environment>,
+    environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: Rc::new(Environment::new()),
+            environment: Rc::new(RefCell::new(Environment::new())),
         }
     }
 
     pub fn interpret(&mut self, expr: Expr) -> Result<LiteralValue, String> {
-        expr.eval(Rc::get_mut(&mut self.environment).expect("cannot get mut ref"))
+        expr.eval(self.environment.clone())
     }
     #[allow(warnings)]
     pub fn interpret_stmt(&mut self, st: Vec<Stmt>) -> Result<(), String> {
@@ -30,7 +30,7 @@ impl Interpreter {
                     els,
                 } => {
                     let a = condition
-                        .eval(Rc::get_mut(&mut self.environment).expect("cannot get mut reff"))?;
+                        .eval(self.environment.clone())?;
                     if a == LiteralValue::True {
                         match *then {
                             Stmt::Block { stmts } => {
@@ -38,7 +38,7 @@ impl Interpreter {
                                 new_env.enclosing = Some(self.environment.clone());
 
                                 let old_env = self.environment.clone();
-                                self.environment = Rc::new(new_env);
+                                self.environment = Rc::new(new_env.into());
                                 self.interpret_stmt(stmts)?;
                                 self.environment = old_env;
                             }
@@ -53,7 +53,7 @@ impl Interpreter {
                                 new_env.enclosing = Some(self.environment.clone());
 
                                 let old_env = self.environment.clone();
-                                self.environment = Rc::new(new_env);
+                                self.environment = Rc::new(new_env.into());
                                 self.interpret_stmt(stmts)?;
                                 self.environment = old_env;
                             }
@@ -65,25 +65,24 @@ impl Interpreter {
                     new_env.enclosing = Some(self.environment.clone());
 
                     let old_env = self.environment.clone();
-                    self.environment = Rc::new(new_env);
+                    self.environment = Rc::new(new_env.into());
                     self.interpret_stmt(stmts)?;
                     self.environment = old_env;
                 }
                 Stmt::Expression { expression } => {
                     expression
-                        .eval(Rc::get_mut(&mut self.environment).expect("cannot get mut reff"))?;
+                        .eval(self.environment.clone())?;
                 }
                 Stmt::Print { expression } => {
-                    let value = expression.eval(
-                        Rc::get_mut(&mut self.environment).expect("cannot get mutable reff"),
-                    )?;
+                    let value = expression
+                        .eval(self.environment.clone())?;
                     println!("{}", value.to_string());
                 }
                 Stmt::Var { name, initializer } => {
                     let value = initializer
-                        .eval(Rc::get_mut(&mut self.environment).expect("cannot get mut ref"))?;
-                    Rc::get_mut(&mut self.environment)
-                        .expect("cannot get mutable reff")
+                        .eval(self.environment.clone())?;
+
+                    self.environment.borrow_mut()
                         .define(name.lexeme, value);
                 }
             };

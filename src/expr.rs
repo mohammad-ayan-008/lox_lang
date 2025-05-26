@@ -1,4 +1,4 @@
-use std::{fmt::format, result};
+use std::{cell::RefCell, fmt::format, rc::Rc, result};
 
 use crate::{
     environment::{self, Environment},
@@ -173,10 +173,10 @@ impl Expr {
     pub fn print(&self) {
         println!("=> {}", self.to_string());
     }
-    pub fn eval(&self, env: &mut Environment) -> Result<LiteralValue, String> {
+    pub fn eval(&self, env: Rc<RefCell<Environment>>) -> Result<LiteralValue, String> {
         match self {
             Expr::Logical { expression, operator, right }=>{
-                let left ={expression.eval(env)?};
+                let left ={expression.eval(env.clone())?};
                 if operator.token_type == TokenType::OR{   
                     if left.is_truthy(){
                         return Ok(left);
@@ -190,15 +190,15 @@ impl Expr {
                 
             },
             Expr::Assign { name, value } => {
-                let new_value = (*value).eval(env)?;
-                let assign_success = env.assign(&name.lexeme, new_value.clone());
+                let new_value = (*value).eval(env.clone())?;
+                let assign_success = env.borrow_mut().assign(&name.lexeme, new_value.clone());
                 if assign_success {
                     Ok(new_value)
                 } else {
                     Err(format!("variable {} not declared", &name.lexeme))
                 }
             }
-            Expr::Variable { name } => match env.get(&name.lexeme) {
+            Expr::Variable { name } => match env.borrow_mut().get(&name.lexeme) {
                 Some(v) => Ok(v.clone()),
                 None => Err(format!("Variable {} is not declared ", name.lexeme)),
             },
@@ -221,7 +221,7 @@ impl Expr {
                 operator,
                 right,
             } => {
-                let left = left.eval(env)?;
+                let left = left.eval(env.clone())?;
                 let right = right.eval(env)?;
 
                 match (&left, operator.token_type, &right) {
