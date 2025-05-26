@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{env, error::Error, rc::Rc};
 
 use crate::{
     environment::{self, Environment},
@@ -20,10 +20,46 @@ impl Interpreter {
     pub fn interpret(&mut self, expr: Expr) -> Result<LiteralValue, String> {
         expr.eval(Rc::get_mut(&mut self.environment).expect("cannot get mut ref"))
     }
-
+    #[allow(warnings)]
     pub fn interpret_stmt(&mut self, st: Vec<Stmt>) -> Result<(), String> {
         for i in st {
             match i {
+                Stmt::IfElse {
+                    condition,
+                    then,
+                    els,
+                } => {
+                    let a = condition
+                        .eval(Rc::get_mut(&mut self.environment).expect("cannot get mut reff"))?;
+                    if a == LiteralValue::True {
+                        match *then {
+                            Stmt::Block { stmts } => {
+                                let mut new_env = Environment::new();
+                                new_env.enclosing = Some(self.environment.clone());
+
+                                let old_env = self.environment.clone();
+                                self.environment = Rc::new(new_env);
+                                self.interpret_stmt(stmts)?;
+                                self.environment = old_env;
+                            }
+                            _ => {
+                                return Err("invalid Expr".to_string());
+                            }
+                        }
+                    } else {
+                        if let Some(a) = els {
+                            if let Stmt::Block { stmts } = *a {
+                                let mut new_env = Environment::new();
+                                new_env.enclosing = Some(self.environment.clone());
+
+                                let old_env = self.environment.clone();
+                                self.environment = Rc::new(new_env);
+                                self.interpret_stmt(stmts)?;
+                                self.environment = old_env;
+                            }
+                        }
+                    }
+                }
                 Stmt::Block { stmts } => {
                     let mut new_env = Environment::new();
                     new_env.enclosing = Some(self.environment.clone());

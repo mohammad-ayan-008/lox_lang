@@ -15,6 +15,15 @@ pub enum LiteralValue {
 }
 
 impl LiteralValue {
+
+
+     pub fn is_truthy(&self) -> bool {
+        match self {
+            LiteralValue::False | LiteralValue::Nil => false,
+            _ => true,
+        }
+    }
+
     pub fn is_falsy(&self) -> LiteralValue {
         match self {
             Self::Number(x) => {
@@ -75,7 +84,13 @@ pub enum Expr {
     Variable {
         name: Token,
     },
+    Logical {
+        expression:Box<Expr>,
+        operator:Token,
+        right:Box<Expr>
+    }
 }
+
 #[allow(warnings)]
 impl ToString for LiteralValue {
     fn to_string(&self) -> String {
@@ -120,6 +135,9 @@ impl LiteralValue {
 impl ToString for Expr {
     fn to_string(&self) -> String {
         match self {
+            Expr::Logical { expression, operator, right }=>{
+                "".to_string()
+            }
             Expr::Assign { name, value } => {
                 format!("{name:?} = {}", value.to_string())
             }
@@ -157,6 +175,20 @@ impl Expr {
     }
     pub fn eval(&self, env: &mut Environment) -> Result<LiteralValue, String> {
         match self {
+            Expr::Logical { expression, operator, right }=>{
+                let left ={expression.eval(env)?};
+                if operator.token_type == TokenType::OR{   
+                    if left.is_truthy(){
+                        return Ok(left);
+                    }
+                }else { 
+                    if !left.is_truthy(){
+                        return  Ok(left);
+                    }
+                }
+                right.eval(env)
+                
+            },
             Expr::Assign { name, value } => {
                 let new_value = (*value).eval(env)?;
                 let assign_success = env.assign(&name.lexeme, new_value.clone());

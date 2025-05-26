@@ -1,20 +1,63 @@
-var a = "global a";
-var b = "global b";
-var c = "global c";
-{
-  var a = "outer a";
-  var b = "outer b";
-  {
-    var a = "inner a";
-     print (a);
-     print (b);
-     print (c);
-  } 
-  print (a);
-  print (b);
-  print (c);
+var a ="lmaao";
+if ( 1 > 10){
+    var a = "lk";
+    print(a);
+}else{
+  if(1==1){
+    print("lost");
+  }
 }
-print (a);
-print (b);
-print (c);
+print(a);
+
+var ab= true or false;
+print(ab);
+
+if ( 5 < 6 and 5 < 10 and 5 > 11){
+    print("5 is kido");
+}else{
+    print("something wrong");
+}
+
+print("hi" or 2);
+
+print(true or false);       // true
+print(false or false);      // false
+print(true and false);      // false
+print(true and true);       // true
+print(false and true);      // false
+print("");
+
+if (true or false and false) {
+  print("A");  // A
+} else {
+  print("B");
+}
+
+if (false and true or true) {
+  print("C");  // C
+} else {
+  print("D");
+}
+
+if (false or false or false) {
+  print("E");
+} else {
+  print("F");  // F
+}
+print("");
+
+var a = "start";
+if (true or (a = "wrong")) {
+  print(a);  // start (right side not executed)
+}
+
+a = "start";
+if (false and (a = "wrong")) {
+  print(a);  // start (right side not executed)
+}
+print("   ");
+print(true or true and false);      // true   (and first, then or)
+print((true or true) and false);    // false
+print(false or false and true);     // false
+print(false or true and true);      // true
 

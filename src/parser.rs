@@ -1,4 +1,4 @@
-use std::{result, usize, vec};
+use std::{env, result, usize, vec};
 
 use crate::{
     expr::{self, Expr, LiteralValue},
@@ -9,22 +9,26 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
-    is_error:bool
+    is_error: bool,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0,is_error:false }
+        Self {
+            tokens,
+            current: 0,
+            is_error: false,
+        }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
         let mut stmt = vec![];
 
-        while !self.is_at_end() && ! self.is_error{
+        while !self.is_at_end() && !self.is_error {
             match self.declaration() {
                 Ok(s) => stmt.push(s),
                 Err(e) => {
-                    eprintln!("{}",e);
+                    eprintln!("{}", e);
                     self.is_error = true;
                 }
             }
@@ -68,11 +72,33 @@ impl Parser {
     fn statement(&mut self) -> Result<Stmt, String> {
         if self.match_tokens(&[TokenType::PRINT]) {
             self.print_stmt()
+        } else if self.match_tokens(&[TokenType::IF]) {
+            self.if_statement()
         } else if self.match_tokens(&[TokenType::LEFT_BRACE]) {
             self.block()
         } else {
             self.expression_stmt()
         }
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt, String> {
+        self.consume(TokenType::LEFT_PAREN, "Expected '(' after if")?;
+        let expression = self.expression()?;
+        self.consume(TokenType::RIGHT_PAREN, "Expected ')' after expression")?;
+        self.consume(TokenType::LEFT_BRACE, "Expected { before start of block ")?;
+        let block = Box::new(self.block()?);
+
+        let els_stmt = if self.match_tokens(&[TokenType::ELSE]) {
+            self.consume(TokenType::LEFT_BRACE, "Expected { before start of block ")?;
+            Some(Box::new(self.block()?))
+        } else {
+            None
+        };
+        Ok(Stmt::IfElse {
+            condition: expression,
+            then: block,
+            els: els_stmt,
+        })
     }
 
     fn block(&mut self) -> Result<Stmt, String> {
@@ -104,19 +130,41 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, String> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
         if self.match_tokens(&[TokenType::EQUAL]) {
             let value = self.assignment()?;
             match expr {
-                Expr::Variable { name } => Ok(Expr::Assign {
-                    name,
-                    value: Box::from(value),
-                }),
+                Expr::Variable { name } =>{
+                    Ok(Expr::Assign {
+                       name,
+                      value: Box::from(value),
+                   })
+                },
                 _ => Err("Invalid assignment target".to_string()),
             }
         } else {
             Ok(expr)
         }
+    }
+
+    fn or(&mut self)->Result<Expr,String>{
+        let mut expr = self.and()?;
+        while self.match_tokens(&[TokenType::OR]) {
+            let operator = self.previous();
+            let right= self.and()?;
+            expr = Expr::Logical { expression: Box::new(expr), operator, right: Box::new(right) } 
+        }
+        Ok(expr)
+    }
+
+    fn and(&mut self)->Result<Expr,String>{
+        let mut expr = self.equality()?;
+        while self.match_tokens(&[TokenType::AND]) {
+            let operator = self.previous();
+            let right= self.equality()?;
+            expr = Expr::Logical { expression: Box::new(expr), operator, right: Box::new(right) } 
+        }
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr, String> {
