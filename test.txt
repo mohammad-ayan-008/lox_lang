@@ -1,9 +1,0 @@
-var a = "heyy";
-var b = 7;
-var d = 78.09;
-if (b >= a){
-  print a
-}else{
-  print b
-}
-print a

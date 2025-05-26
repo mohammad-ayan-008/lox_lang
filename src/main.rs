@@ -10,6 +10,7 @@ use parser::Parser;
 use scanner::Scanner;
 use token::Token;
 
+mod environment;
 mod expr;
 mod interpreter;
 mod parser;
@@ -27,9 +28,18 @@ fn main() {
         println!("Using : jlox [script]");
         exit(64);
     } else if args.len() == 2 {
-        todo!()
+        let path = args.get(1).unwrap();
+        execute_file(&path);
     } else {
         run_prompt();
+    }
+}
+fn execute_file(path: &String) {
+    let mut interpreter = Interpreter::new();
+    let data = read_to_string(path).unwrap();
+    match run(&mut interpreter, data) {
+        Ok(_) => (),
+        Err(e) => println!("{}", e),
     }
 }
 
@@ -63,9 +73,11 @@ fn run_prompt() -> Result<(), String> {
 
 fn run(interpreter: &mut Interpreter, bytes: String) -> Result<(), String> {
     let scanner: Scanner = Scanner::new(bytes);
+
     let tokens: Vec<Token> = scanner.scanTokens();
+
     let mut parser = Parser::new(tokens);
-    let statements= parser.parse()?;
+    let statements = parser.parse()?;
     interpreter.interpret_stmt(statements)?;
     //println!("{}",res.to_string());
     //println!("{:#?}",tokens);

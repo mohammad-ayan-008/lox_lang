@@ -1,4 +1,4 @@
-use std::{result, usize};
+use std::{result, usize, vec};
 
 use crate::{
     expr::{self, Expr, LiteralValue},
@@ -9,34 +9,79 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    is_error:bool
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+        Self { tokens, current: 0,is_error:false }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
         let mut stmt = vec![];
-        let mut errors = vec![];
-        while !self.is_at_end() {
-            match self.statement() {
+
+        while !self.is_at_end() && ! self.is_error{
+            match self.declaration() {
                 Ok(s) => stmt.push(s),
-                Err(e) => errors.push(e),
+                Err(e) => {
+                    eprintln!("{}",e);
+                    self.is_error = true;
+                }
             }
         }
-        if errors.is_empty() {
-            Ok(stmt)
+        Ok(stmt)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, String> {
+        if self.match_tokens(&[TokenType::VAR]) {
+            match self.var_declaration() {
+                Ok(s) => Ok(s),
+                Err(e) => {
+                    self.syncronize();
+                    Err(e)
+                }
+            }
         } else {
-            Err(errors.join("\n"))
+            self.statement()
         }
+    }
+    fn var_declaration(&mut self) -> Result<Stmt, String> {
+        let token = self.consume(TokenType::IDENTIFIER, "Expected variable name")?;
+
+        let init;
+        if self.match_tokens(&[TokenType::EQUAL]) {
+            init = self.expression();
+        } else {
+            init = Ok(Expr::Literal {
+                value: LiteralValue::Nil,
+            });
+        }
+        self.consume(
+            TokenType::SEMICOLON,
+            "Expected ';' after variable declaration",
+        )?;
+        Ok(Stmt::Var {
+            name: token,
+            initializer: init?,
+        })
     }
     fn statement(&mut self) -> Result<Stmt, String> {
         if self.match_tokens(&[TokenType::PRINT]) {
             self.print_stmt()
+        } else if self.match_tokens(&[TokenType::LEFT_BRACE]) {
+            self.block()
         } else {
             self.expression_stmt()
         }
+    }
+
+    fn block(&mut self) -> Result<Stmt, String> {
+        let mut statements = vec![];
+        while !self.check(&TokenType::RIGHT_BRACE) && !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+        self.consume(TokenType::RIGHT_BRACE, "Expected '}' after the block")?;
+        Ok(Stmt::Block { stmts: statements })
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, String> {
@@ -50,17 +95,33 @@ impl Parser {
 
     fn expression_stmt(&mut self) -> Result<Stmt, String> {
         let expr = self.expression()?;
-        self.consume(TokenType::SEMICOLON, "Expected ';' after expression")?;
+        self.consume(TokenType::SEMICOLON, "Expected  ';' after expression")?;
         Ok(Stmt::Expression { expression: expr })
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, String> {
+        let expr = self.equality()?;
+        if self.match_tokens(&[TokenType::EQUAL]) {
+            let value = self.assignment()?;
+            match expr {
+                Expr::Variable { name } => Ok(Expr::Assign {
+                    name,
+                    value: Box::from(value),
+                }),
+                _ => Err("Invalid assignment target".to_string()),
+            }
+        } else {
+            Ok(expr)
+        }
     }
 
     fn equality(&mut self) -> Result<Expr, String> {
         let mut expr = self.comparision()?;
-        while (self.match_tokens(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL])) {
+        while self.match_tokens(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
             let operator = self.previous();
             let right = self.comparision()?;
             expr = Expr::Binary {
@@ -175,20 +236,33 @@ impl Parser {
                     value: LiteralValue::from_token(token),
                 }
             }
-            _ => return Err("Expected Expression ".to_string()),
+            TokenType::IDENTIFIER => {
+                self.advance();
+                result = Expr::Variable {
+                    name: self.previous(),
+                }
+            }
+            _ => {
+                let token = self.peek();
+                return Err(format!(
+                    "[line {}]  Expected expression found {}",
+                    token.line, token.lexeme
+                ));
+            }
         }
 
         Ok(result)
     }
 
-    fn consume(&mut self, token_type: TokenType, msg: &str) -> Result<(), String> {
+    fn consume(&mut self, token_type: TokenType, msg: &str) -> Result<Token, String> {
         let token = self.peek();
         if token.token_type == token_type {
             self.advance();
+            let token = self.previous();
+            Ok(token)
         } else {
-            return Err(msg.to_string());
+            return Err(format!("{} at line {}", msg.to_string(), token.line));
         }
-        Ok(())
     }
 
     fn match_tokens(&mut self, token_type: &[TokenType]) -> bool {

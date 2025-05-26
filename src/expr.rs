@@ -1,6 +1,7 @@
 use std::{fmt::format, result};
 
 use crate::{
+    environment::{self, Environment},
     token::{Literal, Token},
     tokentype::TokenType,
 };
@@ -50,7 +51,12 @@ impl LiteralValue {
     }
 }
 
+#[derive(Debug)]
 pub enum Expr {
+    Assign {
+        name: Token,
+        value: Box<Expr>,
+    },
     Binary {
         left: Box<Expr>,
         operator: Token,
@@ -65,6 +71,9 @@ pub enum Expr {
     Unary {
         operator: Token,
         right: Box<Expr>,
+    },
+    Variable {
+        name: Token,
     },
 }
 #[allow(warnings)]
@@ -111,6 +120,9 @@ impl LiteralValue {
 impl ToString for Expr {
     fn to_string(&self) -> String {
         match self {
+            Expr::Assign { name, value } => {
+                format!("{name:?} = {}", value.to_string())
+            }
             Expr::Binary {
                 left,
                 operator,
@@ -134,6 +146,7 @@ impl ToString for Expr {
             Expr::Grouping { expression } => {
                 format!("(group {})", (*expression).to_string())
             }
+            Expr::Variable { name } => format!("(var {})", name.lexeme),
         }
     }
 }
@@ -142,13 +155,25 @@ impl Expr {
     pub fn print(&self) {
         println!("=> {}", self.to_string());
     }
-    pub fn eval(&self) -> Result<LiteralValue, String> {
-
+    pub fn eval(&self, env: &mut Environment) -> Result<LiteralValue, String> {
         match self {
+            Expr::Assign { name, value } => {
+                let new_value = (*value).eval(env)?;
+                let assign_success = env.assign(&name.lexeme, new_value.clone());
+                if assign_success {
+                    Ok(new_value)
+                } else {
+                    Err(format!("variable {} not declared", &name.lexeme))
+                }
+            }
+            Expr::Variable { name } => match env.get(&name.lexeme) {
+                Some(v) => Ok(v.clone()),
+                None => Err(format!("Variable {} is not declared ", name.lexeme)),
+            },
             Expr::Literal { value } => Ok(value.clone()),
-            Expr::Grouping { expression } => expression.eval(),
+            Expr::Grouping { expression } => expression.eval(env),
             Expr::Unary { operator, right } => {
-                let right = right.eval()?;
+                let right = right.eval(env)?;
                 match (&right, operator.token_type) {
                     (LiteralValue::Number(x), TokenType::MINUS) => Ok(LiteralValue::Number(-x)),
                     (_, TokenType::MINUS) => {
@@ -164,8 +189,8 @@ impl Expr {
                 operator,
                 right,
             } => {
-                let left = left.eval()?;
-                let right = right.eval()?;
+                let left = left.eval(env)?;
+                let right = right.eval(env)?;
 
                 match (&left, operator.token_type, &right) {
                     (LiteralValue::Number(x), TokenType::PLUS, LiteralValue::Number(y)) => {
@@ -200,20 +225,17 @@ impl Expr {
                         Ok(LiteralValue::from_bool(x <= y))
                     }
                     (LiteralValue::StringValue(x), TokenType::PLUS, LiteralValue::Number(y)) => {
-                        Ok(LiteralValue::StringValue(format!("{}{}",x,y)))
+                        Ok(LiteralValue::StringValue(format!("{}{}", x, y)))
                     }
-
 
                     (LiteralValue::StringValue(_), _, LiteralValue::Number(_)) => {
                         Err("Cannot operate on String and number".to_string())
                     }
-                    
-
 
                     (LiteralValue::Number(_), _, LiteralValue::StringValue(_)) => {
                         Err("Cannot operate on String and number".to_string())
                     }
-                    
+
                     (
                         LiteralValue::StringValue(x),
                         TokenType::PLUS,
