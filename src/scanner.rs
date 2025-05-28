@@ -208,7 +208,8 @@ impl Scanner {
         keywords.insert("true", TokenType::TRUE);
         keywords.insert("var", TokenType::VAR);
         keywords.insert("while", TokenType::WHILE);
-
+        keywords.insert("break", TokenType::BREAK);
+        keywords.insert("continue", TokenType::CONTINUE);
         keywords
     }
 

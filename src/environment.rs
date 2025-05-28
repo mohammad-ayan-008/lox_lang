@@ -16,8 +16,8 @@ impl Environment {
         }
     }
 
-    pub fn define(&mut self, name: String, value: LiteralValue) {
-        self.values.insert(name, value);
+    pub fn define(&mut self, name: &String, value: LiteralValue) {
+        self.values.insert(name.to_string(), value);
     }
 
     pub fn get(&self, name: &String) -> Option<LiteralValue> {
@@ -27,7 +27,7 @@ impl Environment {
             (None, Some(t)) => {
                 let a = t.borrow_mut().get(name);
                 a
-            },
+            }
             (None, None) => None,
         }
     }

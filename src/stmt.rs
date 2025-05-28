@@ -1,5 +1,5 @@
 use crate::{expr::Expr, token::Token};
-
+#[derive(Clone,Debug)]
 pub enum Stmt {
     Expression {
         expression: Expr,
@@ -19,4 +19,10 @@ pub enum Stmt {
         then: Box<Stmt>,
         els: Option<Box<Stmt>>,
     },
+    WHILE {
+        condition: Expr,
+        block: Box<Stmt>,
+    },
+    Break,
+    Continue,
 }

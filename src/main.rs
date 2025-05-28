@@ -78,7 +78,7 @@ fn run(interpreter: &mut Interpreter, bytes: String) -> Result<(), String> {
 
     let mut parser = Parser::new(tokens);
     let statements = parser.parse()?;
-    interpreter.interpret_stmt(statements)?;
+    interpreter.interpret_stmt(&statements)?;
     //println!("{}",res.to_string());
     //println!("{:#?}",tokens);
     Ok(())

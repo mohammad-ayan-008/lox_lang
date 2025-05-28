@@ -15,9 +15,7 @@ pub enum LiteralValue {
 }
 
 impl LiteralValue {
-
-
-     pub fn is_truthy(&self) -> bool {
+    pub fn is_truthy(&self) -> bool {
         match self {
             LiteralValue::False | LiteralValue::Nil => false,
             _ => true,
@@ -60,7 +58,7 @@ impl LiteralValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Expr {
     Assign {
         name: Token,
@@ -85,10 +83,10 @@ pub enum Expr {
         name: Token,
     },
     Logical {
-        expression:Box<Expr>,
-        operator:Token,
-        right:Box<Expr>
-    }
+        expression: Box<Expr>,
+        operator: Token,
+        right: Box<Expr>,
+    },
 }
 
 #[allow(warnings)]
@@ -135,9 +133,11 @@ impl LiteralValue {
 impl ToString for Expr {
     fn to_string(&self) -> String {
         match self {
-            Expr::Logical { expression, operator, right }=>{
-                "".to_string()
-            }
+            Expr::Logical {
+                expression,
+                operator,
+                right,
+            } => "".to_string(),
             Expr::Assign { name, value } => {
                 format!("{name:?} = {}", value.to_string())
             }
@@ -175,20 +175,23 @@ impl Expr {
     }
     pub fn eval(&self, env: Rc<RefCell<Environment>>) -> Result<LiteralValue, String> {
         match self {
-            Expr::Logical { expression, operator, right }=>{
-                let left ={expression.eval(env.clone())?};
-                if operator.token_type == TokenType::OR{   
-                    if left.is_truthy(){
+            Expr::Logical {
+                expression,
+                operator,
+                right,
+            } => {
+                let left = { expression.eval(env.clone())? };
+                if operator.token_type == TokenType::OR {
+                    if left.is_truthy() {
                         return Ok(left);
                     }
-                }else { 
-                    if !left.is_truthy(){
-                        return  Ok(left);
+                } else {
+                    if !left.is_truthy() {
+                        return Ok(left);
                     }
                 }
                 right.eval(env)
-                
-            },
+            }
             Expr::Assign { name, value } => {
                 let new_value = (*value).eval(env.clone())?;
                 let assign_success = env.borrow_mut().assign(&name.lexeme, new_value.clone());

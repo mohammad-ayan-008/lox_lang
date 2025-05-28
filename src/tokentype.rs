@@ -43,4 +43,7 @@ pub enum TokenType {
     VAR,
     WHILE,
     EOF,
+
+    BREAK,
+    CONTINUE,
 }

@@ -1,7 +1,7 @@
-var a =6;
-//a= a+1;
-{
-    a = a + 1;
-    print(a);
+for (var i = 0; i < 3; i = i + 1) {
+  if (i == 1) {
+     break;
+  }
+  print(i);
 }
-print(a);
+
