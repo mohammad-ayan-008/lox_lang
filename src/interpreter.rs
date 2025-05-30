@@ -41,7 +41,11 @@ impl Interpreter {
                         'nox_loop: while condition.eval(self.environment.clone())?.is_truthy() {
                             match self.interpret_stmt(&stmts)?{
                                ControllFlow::Break=>break 'nox_loop,
-                               ControllFlow::Continue=> continue 'nox_loop,
+                               ControllFlow::Continue=> {
+                                    let a = stmts.last().unwrap();
+                                    self.interpret_stmt(&[a.clone()]);
+                                    continue 'nox_loop
+                                },
                                ControllFlow::None=>(),
                             }
                         }

@@ -40,6 +40,7 @@ impl Scanner {
     fn scanToken(&mut self) {
         let c: char = self.advance();
         match c {
+            '%' => self.token_add(TokenType::Modulus),
             '(' => self.token_add(TokenType::LEFT_PAREN),
             ')' => self.token_add(TokenType::RIGHT_PAREN),
             '{' => self.token_add(TokenType::LEFT_BRACE),

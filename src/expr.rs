@@ -228,6 +228,9 @@ impl Expr {
                 let right = right.eval(env)?;
 
                 match (&left, operator.token_type, &right) {
+                    (LiteralValue::Number(x), TokenType::Modulus, LiteralValue::Number(y)) => {
+                        Ok(LiteralValue::Number(x % y))
+                    }
                     (LiteralValue::Number(x), TokenType::PLUS, LiteralValue::Number(y)) => {
                         Ok(LiteralValue::Number(x + y))
                     }

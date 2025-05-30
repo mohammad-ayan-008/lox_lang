@@ -72,11 +72,9 @@ impl Parser {
     fn statement(&mut self) -> Result<Stmt, String> {
         if self.match_tokens(&[TokenType::PRINT]) {
             self.print_stmt()
-        }
-        //else if self.match_tokens(&[TokenType::CONTINUE]) {
-         //   self.continue_statement()
-        //} 
-        else if self.match_tokens(&[TokenType::BREAK]){
+        }else if self.match_tokens(&[TokenType::CONTINUE]) {
+            self.continue_statement()
+        }else if self.match_tokens(&[TokenType::BREAK]){
             self.break_stmt()
         }else if self.match_tokens(&[TokenType::IF]) {
             self.if_statement()
@@ -90,11 +88,10 @@ impl Parser {
             self.expression_stmt()
         }
     }
-    //fn continue_statement(&mut self)->Result<Stmt,String>{
-      //  self.consume(TokenType::SEMICOLON, "Expected ; after break")?;
-      //  Ok(Stmt::Continue)
-    //}
-
+    fn continue_statement(&mut self)->Result<Stmt,String>{
+       self.consume(TokenType::SEMICOLON, "Expected ; after break")?;
+       Ok(Stmt::Continue)
+    }
 
 
     fn break_stmt(&mut self)->Result<Stmt,String>{
@@ -328,7 +325,7 @@ impl Parser {
     fn factor(&mut self) -> Result<Expr, String> {
         let mut expr = self.unary()?;
 
-        while self.match_tokens(&[TokenType::STAR, TokenType::SLASH]) {
+        while self.match_tokens(&[TokenType::STAR, TokenType::SLASH,TokenType::Modulus]) {
             let operator = self.previous();
             let right = self.unary()?;
             expr = Expr::Binary {

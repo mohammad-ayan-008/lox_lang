@@ -7,6 +7,7 @@ pub enum TokenType {
     RIGHT_BRACE,
     COMMA,
     DOT,
+    Modulus,
     MINUS,
     PLUS,
     SEMICOLON,
@@ -44,6 +45,9 @@ pub enum TokenType {
     WHILE,
     EOF,
 
+
     BREAK,
     CONTINUE,
+
+
 }
