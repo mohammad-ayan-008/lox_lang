@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="logo1.png" alt="Nox Logo" width="200"/>
-</p>
+![Nox Lang](logo1.png)
 
 <h1 align="center">Nox Programming Language</h1>
 
