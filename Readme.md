@@ -1,4 +1,9 @@
-![Nox Logo](logo.png)
+<p align="center">
+  <img src="logo.png" alt="Nox Logo" width="200"/>
+</p>
+
+<h1 align="center">Nox Programming Language</h1>
+
 # 🌌 Nox Language
 
 **Nox** is a minimal scripting language inspired by Lox with support for variables, functions, recursion, loops, arithmetic expressions, and closures. It is designed for algorithmic expression and educational compiler development.
