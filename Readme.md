@@ -1,7 +1,6 @@
 <p align="center">
   <img src="logo1.png" alt="Nox Logo" width="240" height="246"/>
 </p>
-<h1 align="center">Nox Programming Language</h1>
 
 # 🌌 Nox Language
 
