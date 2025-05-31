@@ -24,7 +24,7 @@
 
 ### Variables
 
-```nox
+```kotlin
 var name = "value";
 var number = 123;
 ```
@@ -33,7 +33,7 @@ var number = 123;
 
 ### Functions
 
-```nox
+```kotlin
 fun functionName(arg1, arg2) {
   // statements
   return value;
@@ -44,7 +44,7 @@ fun functionName(arg1, arg2) {
 
 ### Printing
 
-```nox
+```kotlin
 print(expression);
 ```
 
@@ -62,7 +62,7 @@ Builtin: `floor(x)` returns the largest integer ≤ x
 
 ### If Condition
 
-```nox
+```kotlin
 if (condition) {
   // true block
 } else {
@@ -74,7 +74,7 @@ if (condition) {
 
 ### Loops
 
-```nox
+```kotlin
 for (var i = 0; i < 5; i = i + 1) {
   print(i);
 }
@@ -86,7 +86,7 @@ for (var i = 0; i < 5; i = i + 1) {
 
 ### Sum of Digits
 
-```nox
+```kotlin
 fun sumDigits(a) {
   if (floor(a) == 0.0) {
     return 0;
@@ -100,7 +100,7 @@ print(floor(sumDigits(1234))); // Output: 10
 
 ### Reverse Digits
 
-```nox
+```kotlin
 fun reverse(a, res) {
   if (floor(a) == 0.0) {
     return res;
@@ -114,7 +114,7 @@ print(floor(reverse(1234, 0))); // Output: 4321
 
 ### Binary Conversion
 
-```nox
+```kotlin
 fun toBinary(n) {
   if (floor(n) == 0.0) {
     return;
@@ -129,7 +129,7 @@ toBinary(10); // Output: 1010
 
 ## 📚 Scoping & Closures
 
-```nox
+```kotlin
 var a = "global";
 {
   fun showA() {
@@ -148,7 +148,7 @@ var a = "global";
 
 ### Factorial Using For Loop
 
-```nox
+```kotlin
 fun fact(n) {
   var result = 1;
   for (var i = 2; i <= n; i = i + 1) {
@@ -163,7 +163,7 @@ print(fact(5)); // Output: 120
 
 ### Loop Inside Recursion
 
-```nox
+```kotlin
 fun printNested(n) {
   if (n == 0) {
     return;
@@ -193,7 +193,7 @@ n = 1, i = 0
 
 ### Fibonacci Series
 
-```nox
+```kotlin
 fun fib(n) {
   if (n <= 1) {
     return n;
