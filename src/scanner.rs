@@ -73,7 +73,7 @@ impl Scanner {
                 self.token_add(token);
             }
             '<' => {
-                let token = match self.match_token('<') {
+                let token = match self.match_token('=') {
                     true => TokenType::LESS_EQUAL,
                     false => TokenType::LESS,
                 };
@@ -128,6 +128,7 @@ impl Scanner {
         let value = self.source[self.start..self.current]
             .parse::<f64>()
             .unwrap();
+
         self.add_token(TokenType::NUMBER, Some(Literal::FLiteral(value)));
     }
     fn string(&mut self) {

@@ -5,9 +5,14 @@ use crate::{
     token::{Literal, Token},
     tokentype::TokenType,
 };
+enum IntValue{
+    IntNumber(i64),
+    FNumber(f64)
+}
+
 #[derive(Clone)]
 pub enum LiteralValue {
-    Number(f64),
+    IntValue,
     StringValue(String),
     True,
     False,
@@ -49,6 +54,14 @@ impl LiteralValue {
 
     pub fn is_falsy(&self) -> LiteralValue {
         match self {
+            Self::IntNumber(x)=>{
+                if *x == 0 {
+                    Self::True
+                } else {
+                    Self::False
+                }
+
+            }
             Self::Number(x) => {
                 if *x == 0.0 {
                     Self::True
@@ -76,6 +89,7 @@ impl LiteralValue {
 
     pub fn to_type(&self) -> String {
         match self {
+            LiteralValue::IntNumber(_)=>"IntNumber".to_string(),
             LiteralValue::Number(_) => "Number".to_string(),
             LiteralValue::StringValue(_) => "String".to_string(),
             LiteralValue::Nil => "nil".to_string(),
@@ -126,6 +140,7 @@ pub enum Expr {
 impl ToString for LiteralValue {
     fn to_string(&self) -> String {
         match self {
+            LiteralValue::IntNumber(x)=>x.to_string(),
             LiteralValue::Number(x) => x.to_string(),
             LiteralValue::StringValue(x) => x.clone(),
             LiteralValue::True => "true".to_string(),
@@ -142,9 +157,11 @@ fn unwrap_as_string(literal: Option<Literal>) -> String {
         _ => panic!("could not unwrap"),
     }
 }
-fn unwrap_as_f64(literal: Option<Literal>) -> f64 {
+
+fn unwrap_as_number(literal: Option<Literal>) -> IntValue {
     match literal {
-        Some(Literal::FLiteral(x)) => x as f64,
+        Some(Literal::FLiteral(x)) => IntValue::FNumber((x as f64),
+        Some(Literal::ILiteral(x)) => IntValue::IntNumber(x as i32),
         _ => panic!("could not unwrap"),
     }
 }
@@ -152,7 +169,7 @@ fn unwrap_as_f64(literal: Option<Literal>) -> f64 {
 impl LiteralValue {
     pub fn from_token(token: Token) -> Self {
         match token.token_type {
-            crate::tokentype::TokenType::NUMBER => Self::Number(unwrap_as_f64(token.literal)),
+            crate::tokentype::TokenType::NUMBER => Self::Number(unwrap_as_number(token.literal)),
             crate::tokentype::TokenType::STRING => {
                 Self::StringValue(unwrap_as_string(token.literal))
             }

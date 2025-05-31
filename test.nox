@@ -1,0 +1,36 @@
+fun sumDigits(a) {
+  if (floor(a) == 0.0 ) {
+    return 0;
+  }
+  return (a % 10) + sumDigits(a / 10);
+}
+print(floor(sumDigits(1234))); // Output: 10
+
+fun reverse(a, res) {
+  if (floor(a) == 0.0) {
+    return res;
+  }
+  return reverse(floor(a / 10),floor(res * 10 + (a % 10)));
+}
+print(floor(reverse(1234, 0))); // Output: 4321
+
+fun toBinary(n) {
+  if (floor(n) == 0.0) {
+    return;
+  }
+  toBinary(n / 2);
+  print(floor(n % 2));
+}
+toBinary(10); // Output: 1010
+
+
+var a = "global";
+{
+  fun showA() {
+    print (a);
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}

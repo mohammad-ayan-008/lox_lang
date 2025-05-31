@@ -6,6 +6,7 @@ use crate::tokentype::TokenType;
 pub enum Literal {
     StringLiteral(String),
     FLiteral(f64),
+    ILiteral(i64),
     IdentifierLiteral(String),
 }
 

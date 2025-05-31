@@ -23,6 +23,15 @@ pub enum Stmt {
         condition: Expr,
         block: Box<Stmt>,
     },
+    Function{
+        name:Token,
+        params: Vec<Token>,
+        body: Vec<Stmt>
+    },
+    Return{
+        token:Token,
+        expr:Option<Expr>
+    },
     Break,
     Continue,
 }

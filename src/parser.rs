@@ -1,4 +1,4 @@
-use std::{env, result, usize, vec};
+use std::{env, process::id, result, usize, vec};
 
 use crate::{
     expr::{self, Expr, LiteralValue},
@@ -45,10 +45,36 @@ impl Parser {
                     Err(e)
                 }
             }
-        } else {
+        }else if  self.match_tokens(&[TokenType::FUN]){
+            self.funtion_decl("function")
+        }else {
             self.statement()
         }
     }
+    
+    fn funtion_decl(&mut self,kind:&str)->Result<Stmt,String>{
+        let token = self.consume(TokenType::IDENTIFIER, "Expected {kind} name")?;
+        self.consume(TokenType::LEFT_PAREN, "Expected  '(' after {kind} name");
+        let mut params = vec![];
+        if !self.check(&TokenType::RIGHT_PAREN) {
+            loop {
+                if params.len() >= 255 {
+                    return Err("cant have more than 255 params".to_string())
+                }
+                params.push(self.consume(TokenType::IDENTIFIER, "Expected param name")?);
+                if !self.match_tokens(&[TokenType::COMMA]){
+                    break;
+                }
+            }
+        }
+        self.consume(TokenType::RIGHT_PAREN,"Expected ')' after params")?;
+        self.consume(TokenType::LEFT_BRACE, "Expected '{' before block")?;
+        let Stmt::Block { stmts } = self.block()? else{
+            return Err("Unexpected issue".to_string());
+        };
+        Ok(Stmt::Function { name:token ,  params, body: stmts })
+    }
+
     fn var_declaration(&mut self) -> Result<Stmt, String> {
         let token = self.consume(TokenType::IDENTIFIER, "Expected variable name")?;
 
@@ -82,12 +108,26 @@ impl Parser {
            self.for_statement()
         }else if self.match_tokens(&[TokenType::LEFT_BRACE]) {
             self.block()
-        } else if self.match_tokens(&[TokenType::WHILE]) {
+        }else if self.match_tokens(&[TokenType::RETURN]){
+            self.return_stmt()
+        } 
+        else if self.match_tokens(&[TokenType::WHILE]) {
             self.while_stmt()
         } else {
             self.expression_stmt()
         }
     }
+    fn return_stmt(&mut self)->Result<Stmt,String>{
+        let token = self.previous();
+        let mut value = None;
+        if !self.check(&TokenType::SEMICOLON){
+            value = Some(self.expression()?);
+        }
+        self.consume(TokenType::SEMICOLON, "Expected ; after break")?;
+        Ok(Stmt::Return { token, expr: value })
+    }
+
+
     fn continue_statement(&mut self)->Result<Stmt,String>{
        self.consume(TokenType::SEMICOLON, "Expected ; after break")?;
        Ok(Stmt::Continue)
@@ -338,7 +378,7 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expr, String> {
-        if (self.match_tokens(&[TokenType::BANG, TokenType::MINUS])) {
+        if self.match_tokens(&[TokenType::BANG, TokenType::MINUS]) {
             let operator = self.previous();
             let right = self.unary()?;
             Ok(Expr::Unary {
@@ -346,8 +386,39 @@ impl Parser {
                 right: Box::from(right),
             })
         } else {
-            self.primary()
+            self.call()
         }
+    }
+
+    fn call(&mut self)->Result<Expr,String>{
+        let mut expr = self.primary()?;
+
+        loop {
+            if self.match_tokens(&[TokenType::LEFT_PAREN]){
+                expr = self.finishCall(expr)?;
+            }else {
+                break;
+            }
+        }
+        Ok(expr)
+    }
+
+    fn finishCall(&mut self,callie:Expr)->Result<Expr,String>{
+        let mut args = vec![];
+        if !self.check(&TokenType::RIGHT_PAREN) {
+            loop {
+                if args.len() >= 255{
+                    return Err("Can't have more than 255 args".to_string());
+                }
+                args.push(self.expression()?);
+                if !self.match_tokens(&[TokenType::COMMA]){
+                    break ;
+                }
+            }
+        }
+        let token = self.previous();
+        let token = self.consume(TokenType::RIGHT_PAREN, "Expected ')' after args")?;
+        Ok(Expr::Call { callie : Box::new(callie), paren: token, args })
     }
 
     fn primary(&mut self) -> Result<Expr, String> {
@@ -362,7 +433,7 @@ impl Parser {
                     expression: Box::from(expr),
                 }
             }
-            TokenType::FALSE
+              TokenType::FALSE
             | TokenType::TRUE
             | TokenType::NIL
             | TokenType::NUMBER
