@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="Nox Logo" width="200"/>
+  <img src="logo1.png" alt="Nox Logo" width="200"/>
 </p>
 
 <h1 align="center">Nox Programming Language</h1>
