@@ -1,7 +1,3 @@
-Sure! Here's the entire README content inside a copyable `<textarea>` block. You can copy it easily from below:
-
-````html
-<textarea rows="80" cols="100">
 # 🌌 Nox Language
 
 **Nox** is a minimal scripting language inspired by Lox with support for variables, functions, recursion, loops, arithmetic expressions, and closures. It is designed for algorithmic expression and educational compiler development.
@@ -31,9 +27,7 @@ Sure! Here's the entire README content inside a copyable `<textarea>` block. You
 ```nox
 var name = "value";
 var number = 123;
-````
-
-Variables are mutable and scoped within their enclosing block.
+```
 
 ---
 
@@ -46,8 +40,6 @@ fun functionName(arg1, arg2) {
 }
 ```
 
-Functions support recursion and can return any value.
-
 ---
 
 ### Printing
@@ -56,14 +48,12 @@ Functions support recursion and can return any value.
 print(expression);
 ```
 
-Outputs the result to the console.
-
 ---
 
 ### Operators
 
-Arithmetic: `+`, `-`, `*`, `/`, `%`
-Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
+Arithmetic: `+`, `-`, `*`, `/`, `%`  
+Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`  
 Builtin: `floor(x)` returns the largest integer ≤ x
 
 ---
@@ -80,23 +70,13 @@ if (condition) {
 }
 ```
 
-### Loops
+---
 
-#### For Loop
+### Loops
 
 ```nox
 for (var i = 0; i < 5; i = i + 1) {
   print(i);
-}
-```
-
-#### Recursion + Loop
-
-```nox
-fun countdown(n) {
-  if (n == 0) return;
-  print(n);
-  countdown(n - 1);
 }
 ```
 
@@ -161,8 +141,6 @@ var a = "global";
   showA();         // prints "nil" due to shadowing
 }
 ```
-
-Lexical scoping means functions remember the environment where they were defined.
 
 ---
 
@@ -258,16 +236,9 @@ Example:
 
 ## 📖 License
 
-This language is built for educational and experimental use.
+This language is built for educational and experimental use.  
 Inspired by [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom.
 
 ---
 
 > Made with ❤️ in Rust — for recursion, reasoning, and runtime magic.
->
-> </textarea>
-
-```
-
-Let me know if you'd like a `.zip` or `.md` file version too.
-```
