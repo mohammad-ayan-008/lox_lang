@@ -1,4 +1,4 @@
-use std::{env, process::id, result, usize, vec};
+use std::{env, io::Seek, process::id, result, usize, vec};
 
 use crate::{
     expr::{self, Expr, LiteralValue},
@@ -54,7 +54,7 @@ impl Parser {
     
     fn funtion_decl(&mut self,kind:&str)->Result<Stmt,String>{
         let token = self.consume(TokenType::IDENTIFIER, "Expected {kind} name")?;
-        self.consume(TokenType::LEFT_PAREN, "Expected  '(' after {kind} name");
+        self.consume(TokenType::LEFT_PAREN, "Expected  '(' after {kind} name")?;
         let mut params = vec![];
         if !self.check(&TokenType::RIGHT_PAREN) {
             loop {
@@ -233,6 +233,7 @@ impl Parser {
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, String> {
+
         self.consume(TokenType::LEFT_PAREN, "Expected '(' before value")?;
         let expr = self.expression()?;
         self.consume(TokenType::RIGHT_PAREN, "Expected ')' after value")?;
@@ -248,9 +249,34 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
-        self.assignment()
+        if self.match_tokens(&[TokenType::Anonymus]){
+            self.fn_expression()
+        }else {
+           self.assignment()
+        }
     }
+    fn fn_expression(&mut self)->Result<Expr,String>{
+        self.consume(TokenType::LEFT_PAREN, "Expected '(' after -> ")?;
+        let mut args = vec![];
+        if !self.check(&TokenType::RIGHT_PAREN){
+            loop{
+                if args.len() >= 255{
+                    return Err("Can't have more than 255 args".to_string());
+                }
+                 args.push(self.consume(TokenType::IDENTIFIER, "Expected param name")?);
 
+                if !self.match_tokens(&[TokenType::COMMA]){
+                    break ;
+                }
+            }
+        }
+        self.consume(TokenType::RIGHT_PAREN, "Expected '(' after a func expression")?;
+         self.consume(TokenType::LEFT_BRACE, "Expected '{' before block")?;
+        let Stmt::Block { stmts } = self.block()? else{
+            return Err("Unexpected issue".to_string());
+        };
+        Ok(Expr::AnonymusFx {  params:args, body: stmts })
+    }
     fn assignment(&mut self) -> Result<Expr, String> {
         let expr = self.or()?;
         if self.match_tokens(&[TokenType::EQUAL]) {
@@ -416,7 +442,7 @@ impl Parser {
                 }
             }
         }
-        let token = self.previous();
+
         let token = self.consume(TokenType::RIGHT_PAREN, "Expected ')' after args")?;
         Ok(Expr::Call { callie : Box::new(callie), paren: token, args })
     }

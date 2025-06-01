@@ -49,5 +49,5 @@ pub enum TokenType {
     BREAK,
     CONTINUE,
 
-
+    Anonymus
 }

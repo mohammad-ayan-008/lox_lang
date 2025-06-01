@@ -47,7 +47,14 @@ impl Scanner {
             '}' => self.token_add(TokenType::RIGHT_BRACE),
             ',' => self.token_add(TokenType::COMMA),
             '.' => self.token_add(TokenType::DOT),
-            '-' => self.token_add(TokenType::MINUS),
+            '-' =>{
+                let token = if self.match_token('>'){
+                    TokenType::Anonymus
+                }else{
+                    TokenType::MINUS
+                }; 
+                self.token_add(token);
+            },
             '+' => self.token_add(TokenType::PLUS),
             ';' => self.token_add(TokenType::SEMICOLON),
             '*' => self.token_add(TokenType::STAR),

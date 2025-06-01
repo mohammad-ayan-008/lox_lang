@@ -1,11 +1,11 @@
-use std::{cell::RefCell, env, error::Error, ops::ControlFlow, rc::Rc, result, time::{Instant, SystemTime}};
+use std::{cell::RefCell, env, error::Error, io::Seek, ops::ControlFlow, rc::Rc, result, time::{Instant, SystemTime}};
 
 use crate::{
     environment::{self, Environment}, expr::{self, Expr, LiteralValue}, parser, stmt::{self, Stmt}
 };
 
 pub struct Interpreter {
-    environment: Rc<RefCell<Environment>>,
+    pub environment: Rc<RefCell<Environment>>,
 }
 #[derive(PartialEq)]
 pub enum ControllFlow {
@@ -14,19 +14,19 @@ pub enum ControllFlow {
     ReturnVal(LiteralValue),
     Continue,
 }
-pub fn time_fn(env:Rc<RefCell<Environment>>,args:&Vec<LiteralValue>)->LiteralValue{
+pub fn time_fn(args:&Vec<LiteralValue>)->LiteralValue{
 
     let a = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     LiteralValue::Number(a.as_secs_f64())
 }
-pub fn floor(env:Rc<RefCell<Environment>>,args:&Vec<LiteralValue>)->LiteralValue{
+pub fn floor(args:&Vec<LiteralValue>)->LiteralValue{
     let value = &args[0];
     if let LiteralValue::Number(x)= value{
 
         LiteralValue::Number( x.floor() )
     }else {
         panic!("Expected number");
-    }
+    }  
 }
 impl Interpreter {
     fn forClosure(parent:Rc<RefCell<Environment>>) -> Self{
@@ -43,9 +43,18 @@ impl Interpreter {
         }
     }
 
+    pub fn for_anon(parent:Rc<RefCell<Environment>>)->Self{
+        let mut environment = Environment::new();
+        environment.enclosing = Some(parent);
+        Self { environment: Rc::new(RefCell::new(environment)) }
+    }
+
     pub fn interpret(&mut self, expr: Expr) -> Result<LiteralValue, String> {
         expr.eval(self.environment.clone())
     }
+
+
+
     #[allow(warnings)]
     pub fn interpret_stmt(&mut self, st: &[Stmt]) -> Result<ControllFlow, String> {
         for i in st {
@@ -62,8 +71,9 @@ impl Interpreter {
                     let arity = params.len();
                     let params = params.clone();
                     let body = body.clone();
-                    let call = move |parent,args:&Vec<LiteralValue>| {
-                        let mut closure_interpreter = Interpreter::forClosure(parent);
+                    let environment = self.environment.clone();
+                    let call = move |args:&Vec<LiteralValue>| {
+                        let mut closure_interpreter = Interpreter::forClosure(environment.clone());
                         for (i,arg) in args.iter().enumerate(){
                             closure_interpreter.environment.borrow_mut().define(&params.clone()[i].lexeme, arg.clone());
                         }

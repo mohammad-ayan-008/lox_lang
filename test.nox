@@ -1,36 +1,62 @@
-fun sumDigits(a) {
-  if (floor(a) == 0.0 ) {
-    return 0;
-  }
-  return (a % 10) + sumDigits(a / 10);
+fun test(){
+  print (a);
 }
-print(floor(sumDigits(1234))); // Output: 10
 
-fun reverse(a, res) {
-  if (floor(a) == 0.0) {
-    return res;
-  }
-  return reverse(floor(a / 10),floor(res * 10 + (a % 10)));
-}
-print(floor(reverse(1234, 0))); // Output: 4321
-
-fun toBinary(n) {
-  if (floor(n) == 0.0) {
-    return;
-  }
-  toBinary(n / 2);
-  print(floor(n % 2));
-}
-toBinary(10); // Output: 1010
-
-
-var a = "global";
+var a = 2;
+//test();
 {
-  fun showA() {
-    print (a);
+  var a = "local";
+  test();
+}
+{
+  test();
+}
+
+fun maketest(){
+  var a = 2;
+  fun test(){
+    print(a);
+  }
+  return test;
+}
+
+var tester = maketest();
+tester();
+{
+  var a = "local";
+  tester();
+}
+
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print (i);
   }
 
-  showA();
-  var a = "block";
-  showA();
+  return count;
 }
+
+var counter = makeCounter();
+counter(); // "1".
+counter(); // "2"
+
+
+fun thrice(fn) {
+  for (var i = 1; i <= 3; i = i + 1) {
+    fn(i);
+  }
+}
+
+thrice( -> (a){
+  print (a);
+});
+// "1".
+// "2".
+// "3".
+
+var sum  = -> (a,b){
+  print("The Sum of a + b is "+a+b);
+};
+
+sum(9,0);

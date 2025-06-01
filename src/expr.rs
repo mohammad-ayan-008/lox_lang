@@ -1,9 +1,7 @@
 use std::{cell::RefCell, fmt::{format, write, Debug}, rc::Rc, result, usize};
 
 use crate::{
-    environment::{self, Environment},
-    token::{Literal, Token},
-    tokentype::TokenType,
+    environment::{self, Environment}, interpreter::{ControllFlow, Interpreter}, stmt::Stmt, token::{Literal, Token}, tokentype::TokenType
 };
 #[derive(Clone)]
 pub enum LiteralValue {
@@ -12,7 +10,7 @@ pub enum LiteralValue {
     True,
     False,
     Nil,
-    Callable{name:String,arity:usize,fun:Rc<dyn Fn(Rc<RefCell<Environment>>,&Vec<LiteralValue>)->LiteralValue>}
+    Callable{name:String,arity:usize,fun:Rc<dyn Fn(&Vec<LiteralValue>)->LiteralValue>}
 }
 impl Debug for LiteralValue{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -88,6 +86,10 @@ impl LiteralValue {
 
 #[derive(Debug,Clone)]
 pub enum Expr {
+    AnonymusFx{
+        params:Vec<Token>,
+        body:Vec<Stmt>
+    },
     Assign {
         name: Token,
         value: Box<Expr>,
@@ -167,6 +169,9 @@ impl LiteralValue {
 impl ToString for Expr {
     fn to_string(&self) -> String {
         match self {
+            Expr::AnonymusFx { params, body }=>{
+                format!("{:?} {:?}",params,body)
+            }
             Expr::Call { callie, paren, args }=>{
                 format!("{:?}",callie)
             }
@@ -212,6 +217,28 @@ impl Expr {
     }
     pub fn eval(&self, env: Rc<RefCell<Environment>>) -> Result<LiteralValue, String> {
         match self {
+            Expr::AnonymusFx { params, body }=>{
+                  let params2 = params.clone();
+                  let body = body.clone();
+                  let envs = env.clone();
+                  let call =move  |args:&Vec<LiteralValue>| {
+                        let mut closure_interpreter = Interpreter::for_anon(envs.clone());
+                        for (i,arg) in args.iter().enumerate(){
+                            closure_interpreter.environment.borrow_mut().define(&params2.clone()[i].lexeme, arg.clone());
+                        }
+;
+                        let mut cf =closure_interpreter.interpret_stmt(&body).unwrap();
+                        let return_value;
+                        if let ControllFlow::ReturnVal(val) = cf{
+                            return_value = val; 
+                        }else {
+                            return_value = LiteralValue::Nil;
+                        }
+                        return_value
+                    };
+               Ok(LiteralValue::Callable { name: "anon".to_string(), arity: params.len(), fun: Rc::new(call) })
+
+            },
             Expr::Call {
                 callie, 
                 paren, 
@@ -223,7 +250,7 @@ impl Expr {
                             return Err("Wrong args".to_string());
                         }
                         let args:Vec<LiteralValue> = args.iter().map(|x| x.eval(env.clone()).unwrap()).collect();
-                        Ok(fun(env.clone(),&args))
+                        Ok(fun(&args))
                     }
                     other=>Err(format!("{:?} type is not callable",other))
                 }
